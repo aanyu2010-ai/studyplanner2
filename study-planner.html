@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Study Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12172B;
+    --bg-elev:#171D38;
+    --card:#1D2545;
+    --card-soft:#232B52;
+    --border:rgba(241,238,228,0.09);
+    --border-strong:rgba(241,238,228,0.16);
+    --text:#F1EEE4;
+    --text-dim:#9098BE;
+    --text-faint:#5C6390;
+    --yellow:#2E7CFF;
+    --yellow-ink:#F4F8FF;
+    --coral:#FF7B72;
+    --mint:#6FCF97;
+    --sky:#5DD9C1;
+    --lavender:#B8A6FF;
+    --danger:#FF6B6B;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding-bottom:96px;
+  }
+  #app{max-width:480px;margin:0 auto;padding:20px 18px 8px;}
+
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    margin:0 0 4px;
+  }
+  h1.date{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:0 0 18px;
+    line-height:1.15;
+  }
+
+  .hero{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    background:var(--bg-elev);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:14px 16px;
+    margin-bottom:18px;
+  }
+  .ring-wrap{position:relative;width:56px;height:56px;flex:none;}
+  .ring-wrap svg{transform:rotate(-90deg);}
+  .ring-track{fill:none;stroke:var(--card-soft);stroke-width:5;}
+  .ring-progress{fill:none;stroke:var(--yellow);stroke-width:5;stroke-linecap:round;transition:stroke-dasharray .5s ease;}
+  .ring-label{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--text);
+  }
+  .hero-text p{margin:0;}
+  .hero-title{font-size:14px;font-weight:600;}
+  .hero-sub{font-size:12.5px;color:var(--text-dim);margin-top:2px !important;}
+  .marker{
+    position:relative;display:inline-block;
+  }
+  .marker::before{
+    content:'';position:absolute;left:-3px;right:-3px;bottom:1px;top:38%;
+    background:var(--yellow);opacity:.85;z-index:-1;
+    clip-path:polygon(0 15%,100% 0,100% 85%,0% 100%);
+  }
+
+  .tabs{
+    display:flex;gap:6px;background:var(--bg-elev);
+    border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:16px;
+  }
+  .tab{
+    flex:1;text-align:center;padding:9px 4px;border-radius:9px;
+    font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    transition:background .15s,color .15s;
+  }
+  .tab.active{background:var(--card-soft);color:var(--text);}
+  .tab .count{
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;
+    background:rgba(255,255,255,.08);padding:1px 6px;border-radius:20px;
+  }
+  .tab.active .count{background:var(--yellow);color:var(--yellow-ink);}
+
+  .group{margin-bottom:20px;}
+  .group-head{
+    display:flex;align-items:center;gap:8px;margin:0 0 8px 2px;
+  }
+  .tab-dot{width:9px;height:9px;border-radius:3px;flex:none;}
+  .group-name{font-size:13px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;}
+
+  .task{
+    display:flex;align-items:center;gap:12px;
+    background:var(--card);border:1px solid var(--border);
+    border-left:3px solid var(--task-color,var(--yellow));
+    border-radius:12px;padding:12px 12px;margin-bottom:8px;
+    transition:background .2s;
+  }
+  .task.done{opacity:.5;}
+  .check{
+    width:22px;height:22px;border-radius:50%;flex:none;
+    border:2px solid var(--border-strong);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    font-size:13px;color:transparent;
+  }
+  .task.done .check{background:var(--mint);border-color:var(--mint);color:#0C3320;}
+  .task-body{flex:1;min-width:0;}
+  .task-title{font-size:14.5px;font-weight:500;margin:0;}
+  .task.done .task-title{text-decoration:line-through;}
+  .task-meta{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);
+    margin-top:3px;display:flex;gap:8px;flex-wrap:wrap;
+  }
+  .task-meta .overdue{color:var(--coral);}
+  .task-del{
+    flex:none;width:30px;height:30px;border-radius:8px;border:none;background:transparent;
+    color:var(--text-faint);font-size:15px;cursor:pointer;
+  }
+  .task-del.confirm{background:var(--danger);color:#fff;}
+
+  .empty{
+    text-align:center;padding:40px 12px;color:var(--text-dim);
+  }
+  .empty p{margin:4px 0;font-size:13.5px;}
+  .empty .big{font-family:'Fraunces',serif;font-size:18px;color:var(--text);margin-bottom:6px;}
+
+  .fab{
+    position:fixed;right:20px;bottom:24px;
+    width:56px;height:56px;border-radius:50%;
+    background:var(--yellow);color:var(--yellow-ink);
+    border:none;font-size:26px;font-weight:600;
+    box-shadow:0 8px 24px rgba(46,124,255,.4);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    max-width:480px;
+  }
+
+  .overlay{
+    position:fixed;inset:0;background:rgba(6,8,18,.6);
+    display:none;align-items:flex-end;justify-content:center;z-index:20;
+  }
+  .overlay.open{display:flex;}
+  .sheet{
+    width:100%;max-width:480px;background:var(--bg-elev);
+    border-radius:20px 20px 0 0;padding:18px 18px 22px;
+    max-height:88vh;overflow-y:auto;
+    transform:translateY(100%);transition:transform .25s ease;
+    border-top:1px solid var(--border-strong);
+  }
+  .overlay.open .sheet{transform:translateY(0);}
+  .sheet-handle{width:36px;height:4px;background:var(--border-strong);border-radius:4px;margin:0 auto 16px;}
+  .sheet h2{font-family:'Fraunces',serif;font-size:19px;margin:0 0 16px;font-weight:600;}
+  label{display:block;font-size:12px;color:var(--text-dim);margin:14px 0 6px;font-weight:600;}
+  input[type=text],input[type=date],input[type=number],textarea{
+    width:100%;background:var(--card);border:1px solid var(--border-strong);
+    color:var(--text);border-radius:10px;padding:11px 12px;font-size:15px;font-family:'Inter',sans-serif;
+  }
+  textarea{resize:vertical;min-height:56px;}
+  input:focus,textarea:focus{outline:2px solid var(--yellow);outline-offset:1px;}
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;}
+  .chip{
+    padding:8px 13px;border-radius:20px;border:1px solid var(--border-strong);
+    font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;background:var(--card);
+    display:flex;align-items:center;gap:6px;
+  }
+  .chip.selected{color:var(--bg);border-color:transparent;}
+  .chip-dot{width:8px;height:8px;border-radius:50%;}
+  .new-subject-row{display:flex;gap:8px;margin-top:10px;}
+  .new-subject-row input{flex:1;}
+  .swatch{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer;flex:none;}
+  .swatch.selected{border-color:var(--text);}
+  .swatch-row{display:flex;gap:8px;margin-top:2px;}
+  .btn-row{display:flex;gap:10px;margin-top:20px;}
+  button.primary{
+    flex:1;background:var(--yellow);color:var(--yellow-ink);border:none;
+    padding:13px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;
+  }
+  button.ghost{
+    background:transparent;border:1px solid var(--border-strong);color:var(--text-dim);
+    padding:13px 16px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;
+  }
+  .row2{display:flex;gap:10px;}
+  .row2>div{flex:1;}
+  .field-err{color:var(--coral);font-size:12px;margin-top:6px;display:none;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="overlay" id="overlay">
+  <div class="sheet" id="sheet"></div>
+</div>
+<button class="fab" id="fab" aria-label="Add task">+</button>
+
+<script>
+const COLORS = [
+  {name:'amber', hex:'#FF9F5A'},
+  {name:'coral', hex:'#FF7B72'},
+  {name:'mint', hex:'#6FCF97'},
+  {name:'sky', hex:'#5DD9C1'},
+  {name:'lavender', hex:'#B8A6FF'},
+];
+
+let state = { subjects: [], tasks: [] };
+let currentView = 'today';
+let editingTaskId = null;
+let pendingSubjectColor = COLORS[0].hex;
+let deleteArmed = null;
+
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function fmtDate(iso){
+  if(!iso) return 'no date';
+  const d = new Date(iso+'T00:00:00');
+  const t = new Date(todayISO()+'T00:00:00');
+  const diff = Math.round((d-t)/86400000);
+  if(diff===0) return 'today';
+  if(diff===1) return 'tomorrow';
+  if(diff===-1) return 'yesterday';
+  return d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+}
+
+async function loadData(){
+  try{
+    const s = await window.storage.get('subjects', false);
+    state.subjects = s ? JSON.parse(s.value) : [];
+  }catch(e){ state.subjects = []; }
+  try{
+    const t = await window.storage.get('tasks', false);
+    state.tasks = t ? JSON.parse(t.value) : [];
+  }catch(e){ state.tasks = []; }
+  render();
+}
+async function saveSubjects(){
+  try{ await window.storage.set('subjects', JSON.stringify(state.subjects), false); }catch(e){}
+}
+async function saveTasks(){
+  try{ await window.storage.set('tasks', JSON.stringify(state.tasks), false); }catch(e){}
+}
+
+function subjectById(id){ return state.subjects.find(s=>s.id===id); }
+
+function tasksForView(view){
+  const today = todayISO();
+  let list = state.tasks.slice();
+  if(view==='today'){
+    list = list.filter(t => t.dueDate && t.dueDate <= today && !t.done || (t.dueDate===today));
+    list = state.tasks.filter(t => (t.dueDate && t.dueDate <= today));
+  } else if(view==='upcoming'){
+    const in7 = new Date(); in7.setDate(in7.getDate()+7);
+    const in7iso = in7.toISOString().slice(0,10);
+    list = state.tasks.filter(t => t.dueDate && t.dueDate > today && t.dueDate <= in7iso);
+  } else {
+    list = state.tasks.slice();
+  }
+  return list.sort((a,b)=>{
+    if(a.done!==b.done) return a.done?1:-1;
+    return (a.dueDate||'9999').localeCompare(b.dueDate||'9999');
+  });
+}
+
+function render(){
+  const app = document.getElementById('app');
+  const today = new Date();
+  const dateStr = today.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+
+  const todaysTasks = state.tasks.filter(t=>t.dueDate===todayISO());
+  const doneToday = todaysTasks.filter(t=>t.done).length;
+  const pct = todaysTasks.length ? Math.round((doneToday/todaysTasks.length)*100) : 0;
+  const circumference = 2*Math.PI*22;
+  const dash = circumference*(pct/100);
+
+  const counts = {
+    today: state.tasks.filter(t=>t.dueDate && t.dueDate<=todayISO() && !t.done).length + state.tasks.filter(t=>t.dueDate===todayISO() && t.done).length,
+    upcoming: tasksForView('upcoming').length,
+    all: state.tasks.length
+  };
+
+  app.innerHTML = `
+    <p class="eyebrow">Study planner</p>
+    <h1 class="date">${dateStr}</h1>
+
+    <div class="hero">
+      <div class="ring-wrap">
+        <svg width="56" height="56" viewBox="0 0 56 56">
+          <circle class="ring-track" cx="28" cy="28" r="22"></circle>
+          <circle class="ring-progress" cx="28" cy="28" r="22"
+            stroke-dasharray="${dash} ${circumference}"></circle>
+        </svg>
+        <div class="ring-label">${pct}%</div>
+      </div>
+      <div class="hero-text">
+        <p class="hero-title">${todaysTasks.length ? `<span class="marker">${doneToday}/${todaysTasks.length}</span> done today` : 'Nothing due today'}</p>
+        <p class="hero-sub">${state.tasks.filter(t=>!t.done && t.dueDate && t.dueDate<todayISO()).length} overdue &middot; ${state.subjects.length} subject${state.subjects.length===1?'':'s'}</p>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab ${currentView==='today'?'active':''}" data-view="today">Today <span class="count">${counts.today}</span></div>
+      <div class="tab ${currentView==='upcoming'?'active':''}" data-view="upcoming">Upcoming <span class="count">${counts.upcoming}</span></div>
+      <div class="tab ${currentView==='all'?'active':''}" data-view="all">All <span class="count">${counts.all}</span></div>
+    </div>
+
+    <div id="list"></div>
+  `;
+
+  app.querySelectorAll('.tab').forEach(el=>{
+    el.onclick = ()=>{ currentView = el.dataset.view; render(); };
+  });
+
+  renderList();
+}
+
+function renderList(){
+  const list = document.getElementById('list');
+  const items = tasksForView(currentView);
+
+  if(state.subjects.length===0){
+    list.innerHTML = `<div class="empty">
+      <p class="big">Set up your first subject</p>
+      <p>Tap + to add a subject and your first study task.</p>
+    </div>`;
+    return;
+  }
+  if(items.length===0){
+    const msgs = {
+      today: ['Nothing due today', 'Add a task or check Upcoming.'],
+      upcoming: ['Nothing coming up', 'The next 7 days are clear.'],
+      all: ['No tasks yet', 'Tap + to add your first task.']
+    };
+    const [big,sub] = msgs[currentView];
+    list.innerHTML = `<div class="empty"><p class="big">${big}</p><p>${sub}</p></div>`;
+    return;
+  }
+
+  if(currentView==='all'){
+    let html = '';
+    state.subjects.forEach(sub=>{
+      const subTasks = items.filter(t=>t.subjectId===sub.id);
+      if(!subTasks.length) return;
+      html += `<div class="group">
+        <div class="group-head"><span class="tab-dot" style="background:${sub.color}"></span><span class="group-name">${escapeHtml(sub.name)}</span></div>
+        ${subTasks.map(t=>taskRow(t)).join('')}
+      </div>`;
+    });
+    const orphan = items.filter(t=>!subjectById(t.subjectId));
+    if(orphan.length) html += `<div class="group">${orphan.map(t=>taskRow(t)).join('')}</div>`;
+    list.innerHTML = html;
+  } else {
+    list.innerHTML = items.map(t=>taskRow(t)).join('');
+  }
+
+  list.querySelectorAll('.check').forEach(el=>{
+    el.onclick = ()=> toggleDone(el.dataset.id);
+  });
+  list.querySelectorAll('.task-body').forEach(el=>{
+    el.onclick = ()=> openTaskSheet(el.dataset.id);
+  });
+  list.querySelectorAll('.task-del').forEach(el=>{
+    el.onclick = (e)=>{ e.stopPropagation(); handleDeleteTap(el.dataset.id, el); };
+  });
+}
+
+function taskRow(t){
+  const sub = subjectById(t.subjectId);
+  const color = sub ? sub.color : 'var(--yellow)';
+  const today = todayISO();
+  const overdue = t.dueDate && t.dueDate < today && !t.done;
+  const metaParts = [];
+  if(t.dueDate) metaParts.push(`<span class="${overdue?'overdue':''}">${overdue?'overdue &middot; ':''}${fmtDate(t.dueDate)}</span>`);
+  if(t.duration) metaParts.push(`${t.duration}m`);
+  if(sub) metaParts.push(escapeHtml(sub.name));
+
+  return `<div class="task ${t.done?'done':''}" style="--task-color:${color}">
+    <div class="check" data-id="${t.id}">✓</div>
+    <div class="task-body" data-id="${t.id}">
+      <p class="task-title">${escapeHtml(t.title)}</p>
+      <div class="task-meta">${metaParts.join(' &middot; ')}</div>
+    </div>
+    <button class="task-del" data-id="${t.id}">${deleteArmed===t.id ? '✕' : '⋯'}</button>
+  </div>`;
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+
+function toggleDone(id){
+  const t = state.tasks.find(x=>x.id===id);
+  if(!t) return;
+  t.done = !t.done;
+  saveTasks();
+  render();
+}
+
+function handleDeleteTap(id, btn){
+  if(deleteArmed===id){
+    state.tasks = state.tasks.filter(t=>t.id!==id);
+    deleteArmed = null;
+    saveTasks();
+    render();
+  } else {
+    deleteArmed = id;
+    render();
+    setTimeout(()=>{ if(deleteArmed===id){ deleteArmed=null; render(); } }, 2500);
+  }
+}
+
+// ---- Add / edit task sheet ----
+const overlay = document.getElementById('overlay');
+const sheetEl = document.getElementById('sheet');
+document.getElementById('fab').onclick = ()=> openTaskSheet(null);
+overlay.onclick = (e)=>{ if(e.target===overlay) closeSheet(); };
+
+function closeSheet(){
+  overlay.classList.remove('open');
+  editingTaskId = null;
+}
+
+function openTaskSheet(taskId){
+  editingTaskId = taskId;
+  const t = taskId ? state.tasks.find(x=>x.id===taskId) : null;
+  pendingSubjectColor = COLORS[state.subjects.length % COLORS.length].hex;
+
+  sheetEl.innerHTML = `
+    <div class="sheet-handle"></div>
+    <h2>${t ? 'Edit task' : 'New study task'}</h2>
+
+    <label for="f-title">What are you studying</label>
+    <input type="text" id="f-title" placeholder="Review chapter 4, practice past papers..." value="${t?escapeHtml(t.title):''}">
+
+    <label>Subject</label>
+    <div class="chip-row" id="subject-chips"></div>
+    <div class="new-subject-row" id="new-subject-row" style="display:none;">
+      <input type="text" id="f-new-subject" placeholder="Subject name">
+      <button class="ghost" id="save-subject-btn" type="button">Add</button>
+    </div>
+    <div class="swatch-row" id="swatch-row" style="display:none;margin-top:8px;"></div>
+
+    <div class="row2">
+      <div>
+        <label for="f-date">Due date</label>
+        <input type="date" id="f-date" value="${t&&t.dueDate?t.dueDate:''}">
+      </div>
+      <div>
+        <label for="f-duration">Minutes</label>
+        <input type="number" id="f-duration" min="0" step="5" placeholder="30" value="${t&&t.duration?t.duration:''}">
+      </div>
+    </div>
+
+    <label for="f-notes">Notes (optional)</label>
+    <textarea id="f-notes" placeholder="What to cover, pages, links...">${t&&t.notes?escapeHtml(t.notes):''}</textarea>
+    <p class="field-err" id="err-msg">Give the task a title and pick a subject.</p>
+
+    <div class="btn-row">
+      ${t ? `<button class="ghost" id="delete-btn" type="button">Delete</button>` : ''}
+      <button class="primary" id="save-btn" type="button">${t?'Save changes':'Add task'}</button>
+    </div>
+  `;
+
+  let selectedSubjectId = t ? t.subjectId : (state.subjects[0] ? state.subjects[0].id : null);
+  renderSubjectChips(selectedSubjectId);
+
+  document.getElementById('save-btn').onclick = ()=>{
+    const title = document.getElementById('f-title').value.trim();
+    const sid = sheetEl.dataset.selectedSubject || selectedSubjectId;
+    if(!title || !sid){
+      document.getElementById('err-msg').style.display = 'block';
+      return;
+    }
+    const dueDate = document.getElementById('f-date').value || null;
+    const duration = document.getElementById('f-duration').value ? parseInt(document.getElementById('f-duration').value) : null;
+    const notes = document.getElementById('f-notes').value.trim();
+
+    if(editingTaskId){
+      const et = state.tasks.find(x=>x.id===editingTaskId);
+      Object.assign(et, {title, subjectId:sid, dueDate, duration, notes});
+    } else {
+      state.tasks.push({id:uid(), title, subjectId:sid, dueDate, duration, notes, done:false});
+    }
+    saveTasks();
+    closeSheet();
+    render();
+  };
+
+  if(t){
+    document.getElementById('delete-btn').onclick = ()=>{
+      state.tasks = state.tasks.filter(x=>x.id!==t.id);
+      saveTasks();
+      closeSheet();
+      render();
+    };
+  }
+
+  document.getElementById('new-subject-row').style.display = 'none';
+  overlay.classList.add('open');
+
+  function renderSubjectChips(selectedId){
+    const wrap = document.getElementById('subject-chips');
+    sheetEl.dataset.selectedSubject = selectedId || '';
+    wrap.innerHTML = state.subjects.map(s=>`
+      <div class="chip ${s.id===selectedId?'selected':''}" data-id="${s.id}" style="${s.id===selectedId?`background:${s.color};border-color:${s.color}`:''}">
+        <span class="chip-dot" style="background:${s.id===selectedId?'currentColor':s.color}"></span>${escapeHtml(s.name)}
+      </div>
+    `).join('') + `<div class="chip" id="add-subject-chip">+ Subject</div>`;
+
+    wrap.querySelectorAll('.chip[data-id]').forEach(el=>{
+      el.onclick = ()=>{
+        selectedId = el.dataset.id;
+        sheetEl.dataset.selectedSubject = selectedId;
+        document.getElementById('err-msg').style.display = 'none';
+        renderSubjectChips(selectedId);
+      };
+    });
+    document.getElementById('add-subject-chip').onclick = ()=>{
+      const row = document.getElementById('new-subject-row');
+      const sw = document.getElementById('swatch-row');
+      row.style.display = row.style.display==='none' ? 'flex' : 'none';
+      sw.style.display = sw.style.display==='none' ? 'flex' : 'none';
+      renderSwatches();
+      if(row.style.display==='flex') document.getElementById('f-new-subject').focus();
+    };
+    document.getElementById('save-subject-btn').onclick = ()=>{
+      const name = document.getElementById('f-new-subject').value.trim();
+      if(!name) return;
+      const ns = {id:uid(), name, color:pendingSubjectColor};
+      state.subjects.push(ns);
+      saveSubjects();
+      selectedId = ns.id;
+      document.getElementById('new-subject-row').style.display = 'none';
+      document.getElementById('swatch-row').style.display = 'none';
+      document.getElementById('err-msg').style.display = 'none';
+      renderSubjectChips(selectedId);
+    };
+
+    function renderSwatches(){
+      const sw = document.getElementById('swatch-row');
+      sw.innerHTML = COLORS.map(c=>`<div class="swatch ${c.hex===pendingSubjectColor?'selected':''}" style="background:${c.hex}" data-hex="${c.hex}"></div>`).join('');
+      sw.querySelectorAll('.swatch').forEach(el=>{
+        el.onclick = ()=>{ pendingSubjectColor = el.dataset.hex; renderSwatches(); };
+      });
+    }
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
